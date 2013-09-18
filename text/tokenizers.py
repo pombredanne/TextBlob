@@ -3,10 +3,10 @@
 
 .. versionadded:: 0.4.0
 '''
-
-from .packages import nltk
-from .utils import strip_punc
-from .exceptions import MissingCorpusException
+from __future__ import absolute_import
+from text.packages import nltk
+from text.utils import strip_punc
+from text.exceptions import MissingCorpusException
 
 
 class BaseTokenizer(nltk.tokenize.api.TokenizerI):
@@ -51,7 +51,6 @@ class WordTokenizer(BaseTokenizer):
     Performs the following steps:
 
     * split standard contractions, e.g. don't -> do n't
-    * treat most punctuation characters as separate tokens
     * split commas and single quotes
     * separate periods that appear at the end of line
     '''
@@ -66,7 +65,13 @@ class WordTokenizer(BaseTokenizer):
         if include_punc:
             return tokens
         else:
-            return [strip_punc(word) for word in tokens if strip_punc(word)]
+            # Return each word token
+            # Strips punctuation unless the word comes from a contraction
+            # e.g. "Let's" => ["Let", "'s"]
+            # e.g. "Can't" => ["Ca", "n't"]
+            # e.g. "home." => ['home']
+            return [word if word.startswith("'") else strip_punc(word, all=False)
+                    for word in tokens if strip_punc(word, all=False)]
 
 class SentenceTokenizer(BaseTokenizer):
 
