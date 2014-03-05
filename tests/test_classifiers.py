@@ -3,17 +3,20 @@ import unittest
 from nose.tools import *  # PEP8 asserts
 from nose.plugins.attrib import attr
 
-from text.tokenizers import WordTokenizer
-from text.classifiers import (NaiveBayesClassifier, DecisionTreeClassifier,
-                                basic_extractor, NLTKClassifier)
-from text.compat import unicode
+from textblob.packages import nltk
+from textblob.tokenizers import WordTokenizer
+from textblob.classifiers import (NaiveBayesClassifier, DecisionTreeClassifier,
+                              basic_extractor, contains_extractor, NLTKClassifier,
+                              PositiveNaiveBayesClassifier, _get_words_from_dataset,
+                              MaxEntClassifier)
+from textblob.compat import unicode
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 CSV_FILE = os.path.join(HERE, 'data.csv')
 JSON_FILE = os.path.join(HERE, "data.json")
 TSV_FILE = os.path.join(HERE, "data.tsv")
 
-train_set =  [
+train_set = [
       ('I love this car', 'positive'),
       ('This view is amazing', 'positive'),
       ('I feel great this morning', 'positive'),
@@ -42,29 +45,21 @@ class TestNLTKClassifier(unittest.TestCase):
     def setUp(self):
         self.bad_classifier = BadNLTKClassifier(train_set)
 
-    @attr("py27_only")
     def test_raises_value_error_without_nltk_class(self):
-        with assert_raises(ValueError):
-            self.bad_classifier.classifier
+        assert_raises(ValueError,
+            lambda: self.bad_classifier.classifier)
 
-        with assert_raises(ValueError):
-            self.bad_classifier.train(train_set)
+        assert_raises(ValueError,
+            lambda: self.bad_classifier.train(train_set))
 
-        with assert_raises(ValueError):
-            self.bad_classifier.update([("This is no good.", 'negative')])
+        assert_raises(ValueError,
+            lambda: self.bad_classifier.update([("This is no good.", 'negative')]))
 
 
 class TestNaiveBayesClassifier(unittest.TestCase):
 
     def setUp(self):
         self.classifier = NaiveBayesClassifier(train_set)
-
-    def test_basic_extractor(self):
-        text = "I feel happy this morning."
-        feats = basic_extractor(text, train_set)
-        assert_true(feats["contains(feel)"])
-        assert_true(feats['contains(morning)'])
-        assert_false(feats["contains(amazing)"])
 
     def test_default_extractor(self):
         text = "I feel happy this morning."
@@ -160,10 +155,14 @@ class TestNaiveBayesClassifier(unittest.TestCase):
         training_sentence = cl.train_set[0][0]
         assert_true(isinstance(training_sentence, unicode))
 
-    @attr("py27_only")
     def test_init_with_bad_format_specifier(self):
-        with assert_raises(ValueError):
-            NaiveBayesClassifier(CSV_FILE, format='unknown')
+        assert_raises(ValueError,
+            lambda: NaiveBayesClassifier(CSV_FILE, format='unknown'))
+
+    def test_repr(self):
+        assert_equal(repr(self.classifier),
+            "<NaiveBayesClassifier trained on {0} instances>".format(len(train_set)))
+
 
 class TestDecisionTreeClassifier(unittest.TestCase):
 
@@ -198,6 +197,118 @@ class TestDecisionTreeClassifier(unittest.TestCase):
         pp = self.classifier.pprint(width=60)
         assert_true(isinstance(pp, unicode))
 
+    def test_repr(self):
+        assert_equal(repr(self.classifier),
+            "<DecisionTreeClassifier trained on {0} instances>".format(len(train_set)))
+
+@attr('requires_numpy')
+@attr('slow')
+class TestMaxEntClassifier(unittest.TestCase):
+
+    def setUp(self):
+        self.classifier = MaxEntClassifier(train_set)
+
+    def test_classify(self):
+        res = self.classifier.classify("I feel happy this morning")
+        assert_equal(res, 'positive')
+        assert_equal(len(self.classifier.train_set), len(train_set))
+
+    def test_prob_classify(self):
+        res = self.classifier.prob_classify("I feel happy this morning")
+        assert_equal(res.max(), 'positive')
+        assert_true(res.prob("positive") > res.prob("negative"))
+
+
+
+class TestPositiveNaiveBayesClassifier(unittest.TestCase):
+
+    def setUp(self):
+        sports_sentences = ['The team dominated the game',
+                          'They lost the ball',
+                          'The game was intense',
+                          'The goalkeeper catched the ball',
+                          'The other team controlled the ball'
+                            'The ball went off the court',
+                           'They had the ball for the whole game']
+
+        various_sentences = ['The President did not comment',
+                               'I lost the keys',
+                               'The team won the game',
+                               'Sara has two kids',
+                               'The show is over',
+                               'The cat ate the mouse.']
+
+        self.classifier = PositiveNaiveBayesClassifier(positive_set=sports_sentences,
+                                                        unlabeled_set=various_sentences)
+
+    def test_classifier(self):
+        assert_true(isinstance(self.classifier.classifier,
+                               nltk.classify.PositiveNaiveBayesClassifier))
+
+
+    def test_classify(self):
+        assert_true(self.classifier.classify("My team lost the game."))
+        assert_false(self.classifier.classify("The cat is on the table."))
+
+    def test_update(self):
+        orig_pos_length = len(self.classifier.positive_set)
+        orig_unlabeled_length = len(self.classifier.unlabeled_set)
+        self.classifier.update(new_positive_data=['He threw the ball to the base.'],
+                                new_unlabeled_data=["I passed a tree today."])
+        new_pos_length = len(self.classifier.positive_set)
+        new_unlabeled_length = len(self.classifier.unlabeled_set)
+        assert_equal(new_pos_length, orig_pos_length + 1)
+        assert_equal(new_unlabeled_length, orig_unlabeled_length + 1)
+
+    def test_accuracy(self):
+        test_set = [
+            ("My team lost the game", True),
+            ("The ball was in the court.", True),
+            ("We should have won the game.", True),
+            ("And now for something completely different", False),
+            ("I can't believe it's not butter.", False)
+        ]
+        accuracy = self.classifier.accuracy(test_set)
+        assert_true(isinstance(accuracy, float))
+
+    def test_repr(self):
+        assert_equal(repr(self.classifier),
+            "<PositiveNaiveBayesClassifier trained on {0} labeled and {1} unlabeled instances>"
+                .format(len(self.classifier.positive_set),
+                        len(self.classifier.unlabeled_set))
+                     )
+
+
+def test_basic_extractor():
+    text = "I feel happy this morning."
+    feats = basic_extractor(text, train_set)
+    assert_true(feats["contains(feel)"])
+    assert_true(feats['contains(morning)'])
+    assert_false(feats["contains(amazing)"])
+
+def test_basic_extractor_with_list():
+    text = "I feel happy this morning.".split()
+    feats = basic_extractor(text, train_set)
+    assert_true(feats["contains(feel)"])
+    assert_true(feats['contains(morning)'])
+    assert_false(feats["contains(amazing)"])
+
+def test_contains_extractor_with_string():
+    text = "Simple is better than complex"
+    features = contains_extractor(text)
+    assert_true(features["contains(Simple)"])
+    assert_false(features.get('contains(simple)', False))
+    assert_true(features['contains(complex)'])
+    assert_false(features.get("contains(derp)", False))
+
+def test_contains_extractor_with_list():
+    text = ["Simple", "is", "better", "than", "complex"]
+    features = contains_extractor(text)
+    assert_true(features['contains(Simple)'])
+    assert_false(features.get("contains(simple)", False))
+    assert_true(features['contains(complex)'])
+    assert_false(features.get("contains(derp)", False))
+
 def custom_extractor(document):
     feats = {}
     tokens = document.split()
@@ -205,6 +316,14 @@ def custom_extractor(document):
         feat_name = "last_letter({0})".format(tok[-1])
         feats[feat_name] = True
     return feats
+
+def test_get_words_from_dataset():
+    tok = WordTokenizer()
+    all_words = []
+    for words, _ in train_set:
+        all_words.extend(tok.itokenize(words, include_punc=False))
+    assert_equal(_get_words_from_dataset(train_set), set(all_words))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,3 +1,5 @@
+### Python ###
+
 *.py[cod]
 
 # C extensions
@@ -44,3 +46,14 @@ docs/_build
 
 # Pylint
 pylintrc
+
+### Extra models and data ###
+
+text/*.pickle
+text/en/*.pickle
+
+# Readme build
+README.html
+
+.ipynb_checkpoints/
+*.ipynb

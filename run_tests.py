@@ -14,9 +14,10 @@ When there's no Internet
 from __future__ import unicode_literals
 import nose
 import sys
-from text.compat import PY2
+from textblob.compat import PY2
 
 PY26 = PY2 and int(sys.version_info[1]) < 7
+PYPY = "PyPy" in sys.version
 
 
 def main():
@@ -26,7 +27,7 @@ def main():
 
 
 def get_argv():
-    args = [sys.argv[0],'--exclude', 'nltk']
+    args = [sys.argv[0], "tests", '--exclude', 'nltk']
     attr_conditions = []  # Use nose's attribselect plugin to filter tests
     if "force-all" in sys.argv:
         # Don't exclude any tests
@@ -44,11 +45,17 @@ def get_argv():
     if not PY2:
         # Exclude tests that only work on python2
         attr_conditions.append("not py2_only")
+    if PYPY:
+        # Exclude tests that don't work on PyPY
+        attr_conditions.append("not no_pypy")
     if "fast" in sys.argv:
         attr_conditions.append("not slow")
     if "no-internet" in sys.argv:
         # Exclude tests that require internet
         attr_conditions.append("not requires_internet")
+
+    # Skip tests with the "skip" attribute
+    attr_conditions.append("not skip")
 
     attr_expression = " and ".join(attr_conditions)
     if attr_expression:

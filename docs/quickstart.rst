@@ -3,8 +3,9 @@
 Tutorial: Quickstart
 ====================
 
-TextBlob aims to provide access to common text-processing operations through a familiar interface. You can treat ``TextBlob`` objects as if they were Python strings that learned how to do Natural Language Processing.
+.. module:: textblob.blob
 
+TextBlob aims to provide access to common text-processing operations through a familiar interface. You can treat :class:`TextBlob <TextBlob>` objects as if they were Python strings that learned how to do Natural Language Processing.
 
 Create a TextBlob
 -----------------
@@ -13,9 +14,9 @@ First, the import.
 
 .. doctest::
 
-    >>> from text.blob import TextBlob
+    >>> from textblob import TextBlob
 
-Let's create our first ``TextBlob``.
+Let's create our first :class:`TextBlob <TextBlob>`.
 
 .. doctest::
 
@@ -24,35 +25,35 @@ Let's create our first ``TextBlob``.
 Part-of-speech Tagging
 ----------------------
 
-Part-of-speech tags can be accessed through the ``tags`` property.
+Part-of-speech tags can be accessed through the :meth:`tags <TextBlob.tags>` property.
 
 .. doctest::
 
     >>> wiki.tags
-    [(u'Python', u'NNP'), (u'is', u'VBZ'), (u'a', u'DT'), (u'high-level', u'NN'), (u'general-purpose', u'JJ'), (u'programming', u'NN'), (u'language', u'NN')]
+    [(u'Python', u'NNP'), (u'is', u'VBZ'), (u'a', u'DT'), (u'high-level', u'JJ'), (u'general-purpose', u'JJ'), (u'programming', u'NN'), (u'language', u'NN')]
 
 Noun Phrase Extraction
 ----------------------
 
-Similarly, noun phrases are accessed through the ``noun_phrases`` property.
+Similarly, noun phrases are accessed through the :meth:`noun_phrases <TextBlob.noun_phrases>` property.
 
 .. doctest::
 
     >>> wiki.noun_phrases
-    WordList([u'python'])
+    WordList(['python'])
 
 Sentiment Analysis
 ------------------
 
-The ``sentiment`` property returns the a tuple of the form ``(polarity, subjectivity)``. The polarity score is a float within the range [-1.0, 1.0]. The subjectivity is a float within the range [0.0, 1.0] where 0.0 is very objective and 1.0 is very subjective.
+The :meth:`sentiment <TextBlob.sentiment>` property returns a namedtuple of the form ``Sentiment(polarity, subjectivity)``. The polarity score is a float within the range [-1.0, 1.0]. The subjectivity is a float within the range [0.0, 1.0] where 0.0 is very objective and 1.0 is very subjective.
 
 .. doctest::
 
     >>> testimonial = TextBlob("Textblob is amazingly simple to use. What great fun!")
     >>> testimonial.sentiment
-    (0.39166666666666666, 0.4357142857142857)
-
-You can also access the scores from the ``blob.polarity`` and ``blob.subjectivity`` properties.
+    Sentiment(polarity=0.39166666666666666, subjectivity=0.4357142857142857)
+    >>> testimonial.sentiment.polarity
+    0.39166666666666666
 
 
 Tokenization
@@ -66,11 +67,11 @@ You can break TextBlobs into words or sentences.
     ...                "Explicit is better than implicit. "
     ...                "Simple is better than complex.")
     >>> zen.words
-    WordList([u'Beautiful', u'is', u'better', u'than', u'ugly', u'Explicit', u'is', u'better', u'than', u'implicit', u'Simple', u'is', u'better', u'than', u'complex'])
+    WordList(['Beautiful', 'is', 'better', 'than', 'ugly', 'Explicit', 'is', 'better', 'than', 'implicit', 'Simple', 'is', 'better', 'than', 'complex'])
     >>> zen.sentences
-    [Sentence('Beautiful is better than ugly.'), Sentence('Explicit is better than implicit.'), Sentence('Simple is better than complex.')]
+    [Sentence("Beautiful is better than ugly."), Sentence("Explicit is better than implicit."), Sentence("Simple is better than complex.")]
 
-``Sentence`` objects have the same properties and methods as TextBlobs.
+:class:`Sentence <Sentence>` objects have the same properties and methods as TextBlobs.
 
 ::
 
@@ -83,46 +84,82 @@ For more advanced tokenization, see the :ref:`Advanced Usage <advanced>` guide.
 Words Inflection and Lemmatization
 ----------------------------------
 
-Each word in ``TextBlob.words`` or ``Sentence.words`` is a ``Word``
+Each word in :meth:`TextBlob.words <TextBlob.words>` or :meth:`Sentence.words <Sentence.words>` is a :class:`Word <Word>`
 object (a subclass of ``unicode``) with useful methods, e.g. for word inflection.
 
 .. doctest::
 
     >>> sentence = TextBlob('Use 4 spaces per indentation level.')
     >>> sentence.words
-    WordList([u'Use', u'4', u'spaces', u'per', u'indentation', u'level'])
+    WordList(['Use', '4', 'spaces', 'per', 'indentation', 'level'])
     >>> sentence.words[2].singularize()
     'space'
     >>> sentence.words[-1].pluralize()
     'levels'
 
-Words can be lemmatized by accessing the ``lemma`` property.
+Words can be lemmatized by calling the :meth:`lemmatize <Word.lemmatize>` method.
 
 .. doctest::
 
-    >>> from text.blob import Word
+    >>> from textblob import Word
     >>> w = Word("octopi")
-    >>> w.lemma
-    'octopus'
+    >>> w.lemmatize()
+    u'octopus'
+    >>> w = Word("went")
+    >>> w.lemmatize("v")  # Pass in part of speech (verb)
+    u'go'
 
+WordNet Integration
+-------------------
+
+You can access the synsets for a :class:`Word <Word>` via the :meth:`synsets <Word.synsets>` property or the :meth:`get_synsets <Word.get_synsets>` method, optionally passing in a part of speech.
+
+.. doctest::
+
+    >>> from textblob import Word
+    >>> from textblob.wordnet import VERB
+    >>> word = Word("octopus")
+    >>> word.synsets
+    [Synset('octopus.n.01'), Synset('octopus.n.02')]
+    >>> Word("hack").get_synsets(pos=VERB)
+    [Synset('chop.v.05'), Synset('hack.v.02'), Synset('hack.v.03'), Synset('hack.v.04'), Synset('hack.v.05'), Synset('hack.v.06'), Synset('hack.v.07'), Synset('hack.v.08')]
+
+You can access the definitions for each synset via the :meth:`definitions <Word.definitions>` property or the :meth:`define() <Word.define>` method, which can also take an optional part-of-speech argument.
+
+.. doctest::
+
+    >>> Word("octopus").definitions
+    [u'tentacles of octopus prepared as food', u'bottom-living cephalopod having a soft oval body with eight long tentacles']
+
+You can also create synsets directly.
+
+.. doctest::
+
+    >>> from textblob.wordnet import Synset
+    >>> octopus = Synset('octopus.n.02')
+    >>> shrimp = Synset('shrimp.n.03')
+    >>> octopus.path_similarity(shrimp)
+    0.1111111111111111
+
+For more information on the WordNet API, see the NLTK documentation on the `Wordnet Interface <http://nltk.googlecode.com/svn/trunk/doc/howto/wordnet.html>`_.
 
 WordLists
 ---------
 
-Similarly, ``WordLists`` are just Python lists with additional methods.
+A :class:`WordList <textblob.WordList>` is just a Python list with additional methods.
 
 .. doctest::
 
     >>> animals = TextBlob("cat dog octopus")
     >>> animals.words
-    WordList([u'cat', u'dog', u'octopus'])
+    WordList(['cat', 'dog', 'octopus'])
     >>> animals.words.pluralize()
-    WordList([u'cats', u'dogs', u'octopodes'])
+    WordList(['cats', 'dogs', 'octopodes'])
 
 Spelling Correction
 -------------------
 
-Use the ``correct()`` method to attempt spelling correction.
+Use the :meth:`correct() <TextBlob.correct>` method to attempt spelling correction.
 
 .. doctest::
 
@@ -130,11 +167,11 @@ Use the ``correct()`` method to attempt spelling correction.
     >>> print(b.correct())
     I have good spelling!
 
-``Word`` objects have a ``spellcheck()`` method that returns a list of ``(word, confidence)`` tuples with spelling suggestions.
+:class:`Word <Word>` objects have a :meth:`spellcheck() Word.spellcheck` method that returns a list of ``(word, confidence)`` tuples with spelling suggestions.
 
 .. doctest::
 
-    >>> from text.blob import Word
+    >>> from textblob import Word
     >>> w = Word('falibility')
     >>> w.spellcheck()
     [(u'fallibility', 1.0)]
@@ -145,7 +182,7 @@ Spelling correction is based on Peter Norvig's "How to Write a Spelling Correcto
 Get Word and Noun Phrase Frequencies
 ------------------------------------
 
-There are two ways to get the frequency of a word or noun phrase in a ``TextBlob``.
+There are two ways to get the frequency of a word or noun phrase in a :class:`TextBlob <TextBlob>`.
 
 The first is through the ``word_counts`` dictionary. ::
 
@@ -181,7 +218,7 @@ TextBlobs can be translated between languages.
 
     >>> en_blob = TextBlob(u"Simple is better than complex.")
     >>> en_blob.translate(to="es")
-    TextBlob(u'Simple es mejor que complejo .')
+    TextBlob("Simple es mejor que complejo .")
 
 If no source language is specified, TextBlob will attempt to detect the language. You can specify the source language explicitly, like so.
 
@@ -189,9 +226,9 @@ If no source language is specified, TextBlob will attempt to detect the language
 
     >>> chinese_blob = TextBlob(u"美丽优于丑陋")
     >>> chinese_blob.translate(from_lang="zh-CN", to='en')
-    TextBlob(u'Beautiful is better than ugly')
+    TextBlob("Beautiful is better than ugly")
 
-You can also attempt to detect a TextBlob's language using ``TextBlob.detect_language()``.
+You can also attempt to detect a TextBlob's language using :meth:`TextBlob.detect_language() <TextBlob.detect_language>`.
 
 .. doctest::
 
@@ -208,13 +245,13 @@ Language translation and detection is powered by the `Google Translate API`_.
 Parsing
 -------
 
-Use the ``parse()`` method to parse the text.
+Use the :meth:`parse() <TextBlob.parse>` method to parse the text.
 
 .. doctest::
 
     >>> b = TextBlob("And now for something completely different.")
-    >>> b.parse()
-    'And/CC/O/O now/RB/B-ADVP/O for/IN/B-PP/B-PNP something/NN/B-NP/I-PNP completely/RB/B-ADJP/O different/JJ/I-ADJP/O ././O/O'
+    >>> print(b.parse())
+    And/CC/O/O now/RB/B-ADVP/O for/IN/B-PP/B-PNP something/NN/B-NP/I-PNP completely/RB/B-ADJP/O different/JJ/I-ADJP/O ././O/O
 
 By default, TextBlob uses pattern's parser [#]_.
 
@@ -227,14 +264,14 @@ You can use Python's substring syntax.
 .. doctest::
 
     >>> zen[0:19]
-    TextBlob('Beautiful is better')
+    TextBlob("Beautiful is better")
 
 You can use common string methods.
 
 .. doctest::
 
     >>> zen.upper()
-    TextBlob('BEAUTIFUL IS BETTER THAN UGLY. EXPLICIT ...BETTER THAN COMPLEX.')
+    TextBlob("BEAUTIFUL IS BETTER THAN UGLY. EXPLICIT IS BETTER THAN IMPLICIT. SIMPLE IS BETTER THAN COMPLEX.")
     >>> zen.find("Simple")
     65
 
@@ -254,27 +291,26 @@ You can concatenate and interpolate TextBlobs and strings.
 .. doctest::
 
     >>> apple_blob + ' and ' + banana_blob
-    TextBlob('apples and bananas')
+    TextBlob("apples and bananas")
     >>> u"{0} and {1}".format(apple_blob, banana_blob)
     u'apples and bananas'
 
 `n`-grams
 ---------
 
-The ``TextBlob.ngrams()`` method returns a list of tuples of `n` successive words.
+The :class:`TextBlob.ngrams() <TextBlob.ngrams>` method returns a list of tuples of `n` successive words.
 
 .. doctest::
 
     >>> blob = TextBlob("Now is better than never.")
     >>> blob.ngrams(n=3)
-    [WordList([u'Now', u'is', u'better']), WordList([u'is', u'better', u'than']), WordList([u'better', u'than', u'never'])]
-
+    [WordList(['Now', 'is', 'better']), WordList(['is', 'better', 'than']), WordList(['better', 'than', 'never'])]
 
 
 Get Start and End Indices of Sentences
 --------------------------------------
 
-Use ``sentence.start`` and ``sentence.end`` to get the indices where a sentence starts and ends within a ``TextBlob``.
+Use ``sentence.start`` and ``sentence.end`` to get the indices where a sentence starts and ends within a :class:`TextBlob <TextBlob>`.
 
 .. doctest::
 
@@ -287,16 +323,6 @@ Use ``sentence.start`` and ``sentence.end`` to get the indices where a sentence 
     ---- Starts at index 31, Ends at index 64
     Simple is better than complex.
     ---- Starts at index 65, Ends at index 95
-
-Get a JSON-serialized version of a blob
----------------------------------------
-
-You can get a JSON representation of a blob with
-
-.. doctest::
-
-    >>> zen.json
-    '[{"polarity": 0.2166666666666667, "stripped": "beautiful is better than ugly", "noun_phrases": ["beautiful"], "raw": "Beautiful is better than ugly.", "subjectivity": 0.8333333333333334, "end_index": 30, "start_index": 0}, {"polarity": 0.5, "stripped": "explicit is better than implicit", "noun_phrases": ["explicit"], "raw": "Explicit is better than implicit.", "subjectivity": 0.5, "end_index": 64, "start_index": 31}, {"polarity": 0.06666666666666667, "stripped": "simple is better than complex", "noun_phrases": ["simple"], "raw": "Simple is better than complex.", "subjectivity": 0.41904761904761906, "end_index": 95, "start_index": 65}]'
 
 Next Steps
 ++++++++++

@@ -5,48 +5,37 @@ API Reference
 
 Blob Classes
 ------------
-.. module:: text.blob
 
-These include the :class:`TextBlob <TextBlob>` and :class:`Sentence <Sentence>`
-classes, which both inherit from :class:`BaseBlob <BaseBlob>`.
-
-.. autoclass:: BaseBlob
+.. automodule:: textblob.blob
     :members:
-
-.. autoclass:: TextBlob
-    :members:
-
-.. autoclass:: Sentence
-    :members:
-
-Lower-level classes
--------------------
-.. autoclass:: Word
     :inherited-members:
-    :members:
 
-.. autoclass:: WordList
-    :inherited-members:
+.. _api_base_classes:
+
+Base Classes
+------------
+
+.. automodule:: textblob.base
     :members:
 
 Tokenizers
 ----------
 
-.. automodule:: text.tokenizers
+.. automodule:: textblob.tokenizers
     :members:
     :inherited-members:
 
 POS Taggers
 -----------
 
-.. automodule:: text.taggers
+.. automodule:: textblob.en.taggers
     :members:
     :inherited-members:
 
 Noun Phrase Extractors
 ----------------------
 
-.. automodule:: text.np_extractors
+.. automodule:: textblob.en.np_extractors
     :members: BaseNPExtractor, ConllExtractor, FastNPExtractor
     :inherited-members:
 
@@ -54,7 +43,7 @@ Noun Phrase Extractors
 Sentiment Analyzers
 -------------------
 
-.. automodule:: text.sentiments
+.. automodule:: textblob.en.sentiments
     :members:
     :inherited-members:
 
@@ -62,7 +51,7 @@ Sentiment Analyzers
 Parsers
 -------
 
-.. automodule:: text.parsers
+.. automodule:: textblob.en.parsers
     :members:
     :inherited-members:
 
@@ -71,14 +60,14 @@ Parsers
 Classifiers
 -----------
 
-.. automodule:: text.classifiers
+.. automodule:: textblob.classifiers
     :members:
     :inherited-members:
 
 Blobber
 -------
 
-.. autoclass:: text.blob.Blobber
+.. autoclass:: textblob.blob.Blobber
     :members:
     :special-members:
     :exclude-members: __weakref__
@@ -86,15 +75,20 @@ Blobber
 File Formats
 ------------
 
-.. automodule:: text.formats
+.. automodule:: textblob.formats
     :members:
     :inherited-members:
 
+Wordnet
+-------
+
+.. automodule:: textblob.wordnet
+
 Exceptions
 ----------
-.. module:: text.exceptions
+.. module:: textblob.exceptions
 
-.. autoexception:: text.exceptions.MissingCorpusException
+.. autoexception:: textblob.exceptions.MissingCorpusException
 
 
 

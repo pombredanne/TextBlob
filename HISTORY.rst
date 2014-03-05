@@ -1,6 +1,78 @@
 Changelog
 =========
 
+0.9.0 (unreleased)
+------------------
+- *Backwards-incompatible*: Completely deprecate ``import text.blob``. You should ``import textblob`` instead.
+- *Backwards-incompatible*: Completely deprecate ``PerceptronTagger``. Install ``textblob-aptagger`` instead.
+- Improved docs.
+
+
+0.8.4 (2014-02-02)
+------------------
+- Fix display (``__repr__``) of WordList slices on Python 3.
+- Add download_corpora module. Corpora must now be downloaded using ``python -m textblob.download_corpora``.
+
+0.8.3 (2013-12-29)
+------------------
+- Sentiment analyzers return namedtuples, e.g. ``Sentiment(polarity=0.12, subjectivity=0.34)``.
+- Memory usage improvements to NaiveBayesAnalyzer and basic_extractor (default feature extractor for classifiers module).
+- Add ``textblob.tokenizers.sent_tokenize`` and ``textblob.tokenizers.word_tokenize`` convenience functions.
+- Add ``textblob.classifiers.MaxEntClassifer``.
+- Improved NLTKTagger.
+
+0.8.2 (2013-12-21)
+------------------
+- Fix bug in spelling correction that stripped some punctuation (Issue #48).
+- Various improvements to spelling correction: preserves whitespace characters (Issue #12); handle contractions and punctuation between words. Thanks @davidnk.
+- Make ``TextBlob.words`` more memory-efficient.
+- Translator now sends POST instead of GET requests. This allows for larger bodies of text to be translated (Issue #49).
+- Update pattern tagger for better accuracy.
+
+0.8.1 (2013-11-16)
+------------------
+- Fix bug that caused ``ValueError`` upon sentence tokenization. This removes modifications made to the NLTK sentence tokenizer.
+- Add ``Word.lemmatize()`` method that allows passing in a part-of-speech argument.
+- ``Word.lemma`` returns correct part of speech for Word objects that have their ``pos`` attribute set. Thanks @RomanYankovsky.
+
+
+0.8.0 (2013-10-23)
+------------------
+- *Backwards-incompatible*: Renamed package to ``textblob``. This avoids clashes with other namespaces called `text`. TextBlob should now be imported with ``from textblob import TextBlob``.
+- Update pattern resources for improved parser accuracy.
+- Update NLTK.
+- Allow Translator to connect to proxy server.
+- PerceptronTagger completely deprecated. Install the ``textblob-aptagger`` extension instead.
+
+0.7.1 (2013-09-30)
+------------------
+- Bugfix updates.
+- Fix bug in feature extraction for ``NaiveBayesClassifier``.
+- ``basic_extractor`` is now case-sensitive, e.g. contains(I) != contains(i)
+- Fix ``repr`` output when a TextBlob contains non-ascii characters.
+- Fix part-of-speech tagging with ``PatternTagger`` on Windows.
+- Suppress warning about not having scikit-learn installed.
+
+0.7.0 (2013-09-25)
+------------------
+- Wordnet integration. ``Word`` objects have ``synsets`` and ``definitions`` properties. The ``text.wordnet`` module allows you to create ``Synset`` and ``Lemma`` objects directly.
+- Move all English-specific code to its own module, ``text.en``.
+- Basic extensions framework in place. TextBlob has been refactored to make it easier to develop extensions.
+- Add ``text.classifiers.PositiveNaiveBayesClassifier``.
+- Update NLTK.
+- ``NLTKTagger`` now working on Python 3.
+- Fix ``__str__`` behavior. ``print(blob)`` should now print non-ascii text correctly in both Python 2 and 3.
+- *Backwards-incompatible*: All abstract base classes have been moved to the ``text.base`` module.
+- *Backwards-incompatible*: ``PerceptronTagger`` will now be maintained as an extension, ``textblob-aptagger``. Instantiating a ``text.taggers.PerceptronTagger()`` will raise a ``DeprecationWarning``.
+
+0.6.3 (2013-09-15)
+------------------
+- Word tokenization fix: Words that stem from a contraction will still have an apostrophe, e.g. ``"Let's" => ["Let", "'s"]``.
+- Fix bug with comparing blobs to strings.
+- Add ``text.taggers.PerceptronTagger``, a fast and accurate POS tagger. Thanks `@syllog1sm <http://github.com/syllog1sm>`_.
+- Note for Python 3 users: You may need to update your corpora, since NLTK master has reorganized its corpus system. Just run ``curl https://raw.github.com/sloria/TextBlob/master/download_corpora.py | python`` again.
+- Add ``download_corpora_lite.py`` script for getting the minimum corpora requirements for TextBlob's basic features.
+
 0.6.2 (2013-09-05)
 ------------------
 - Fix bug that resulted in a ``UnicodeEncodeError`` when tagging text with non-ascii characters.

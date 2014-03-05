@@ -1,4 +1,7 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import os
+import sys
 from invoke import task, run
 
 docs_dir = 'docs'
@@ -33,7 +36,7 @@ def browse_docs():
     run("open %s" % os.path.join(build_dir, 'index.html'))
 
 @task
-def build_docs(clean=False, browse=False):
+def docs(clean=False, browse=False):
     if clean:
         clean_docs()
     run("sphinx-build %s %s" % (docs_dir, build_dir), pty=True)
@@ -41,6 +44,24 @@ def build_docs(clean=False, browse=False):
         browse_docs()
 
 @task
+def readme():
+    run("rst2html.py README.rst > README.html", pty=True)
+    run("open README.html")
+
+@task
 def doctest():
     os.chdir(docs_dir)
     run("make doctest")
+
+@task
+def publish(test=False):
+    """Publish to the cheeseshop."""
+    try:
+        __import__('wheel')
+    except ImportError:
+        print("wheel required. Run `pip install wheel`.")
+        sys.exit(1)
+    if test:
+        run('python setup.py register -r test sdist bdist_wheel upload -r test')
+    else:
+        run("python setup.py register sdist bdist_wheel upload")

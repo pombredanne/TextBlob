@@ -14,9 +14,9 @@ TextBlob: Simplified Text Processing
     :target: https://crate.io/packages/textblob/
     :alt: Number of PyPI downloads
 
-.. image:: http://api.flattr.com/button/flattr-badge-large.png
-    :target: http://flattr.com/thing/1786153/sloriaTextBlob-on-GitHub
-    :alt: Flattr Steve
+.. image:: https://badge.waffle.io/sloria/TextBlob.png?label=Ready
+     :target: https://waffle.io/sloria/TextBlob
+     :alt: Issues in Ready
 
 
 Homepage: `https://textblob.readthedocs.org/ <https://textblob.readthedocs.org/>`_
@@ -26,7 +26,7 @@ Homepage: `https://textblob.readthedocs.org/ <https://textblob.readthedocs.org/>
 
 .. code-block:: python
 
-    from text.blob import TextBlob
+    from textblob import TextBlob
 
     text = '''
     The titular threat of The Blob has always struck me as the ultimate movie
@@ -48,9 +48,9 @@ Homepage: `https://textblob.readthedocs.org/ <https://textblob.readthedocs.org/>
                         #            'amoeba-like mass', ...])
 
     for sentence in blob.sentences:
-        print(sentence.sentiment)  # returns (polarity, subjectivity)
-    # (0.060, 0.605)
-    # (-0.341, 0.767)
+        print(sentence.sentiment.polarity)
+    # 0.060
+    # -0.341
 
     blob.translate(to="es")  # 'La amenaza titular de The Blob...'
 
@@ -71,14 +71,15 @@ Features
 - Word inflection (pluralization and singularization) and lemmatization
 - Spelling correction
 - JSON serialization
-- Easily swap models, or create your own
+- Add new models or languages through extensions
+- WordNet integration
 
 Get it now
 ----------
 ::
 
     $ pip install -U textblob
-    $ curl https://raw.github.com/sloria/TextBlob/master/download_corpora.py | python
+    $ python -m textblob.download_corpora
 
 Examples
 --------

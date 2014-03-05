@@ -6,14 +6,14 @@
 TextBlob: Simplified Text Processing
 ====================================
 
-Release v\ |version|. (:ref:`Installation <install>`)
+Release v\ |version|. (:ref:`Changelog`)
 
 `TextBlob` is a Python (2 and 3) library for processing textual data. It provides a simple API for diving into common natural language processing (NLP) tasks such as part-of-speech tagging, noun phrase extraction, sentiment analysis, classification, translation, and more.
 
 
 .. code-block:: python
 
-    from text.blob import TextBlob
+    from textblob import TextBlob
 
     text = '''
     The titular threat of The Blob has always struck me as the ultimate movie
@@ -35,9 +35,9 @@ Release v\ |version|. (:ref:`Installation <install>`)
                         #            'amoeba-like mass', ...])
 
     for sentence in blob.sentences:
-        print(sentence.sentiment)  # returns (polarity, subjectivity)
-    # (0.060, 0.605)
-    # (-0.341, 0.767)
+        print(sentence.sentiment.polarity)
+    # 0.060
+    # -0.341
 
     blob.translate(to="es")  # 'La amenaza titular de The Blob...'
 
@@ -58,17 +58,17 @@ Features
 - Word inflection (pluralization and singularization) and lemmatization
 - Spelling correction
 - JSON serialization
-- Easily swap models, or create your own
+- Add new models or languages through extensions
+- WordNet integration
 
 Get it now
 ----------
 ::
 
     $ pip install -U textblob
-    $ curl https://raw.github.com/sloria/TextBlob/master/download_corpora.py | python
+    $ python -m textblob.download_corpora
 
 Ready to dive in? Go on to the :ref:`Quickstart guide <quickstart>`.
-
 
 Guide
 =====
@@ -81,16 +81,18 @@ Guide
    quickstart
    classifiers
    advanced_usage
+   extensions
    api_reference
 
 Project info
 ============
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
-   contributing
    changelog
+   authors
+   contributing
 
 
 .. _NLTK: http://www.nltk.org

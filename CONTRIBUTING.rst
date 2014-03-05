@@ -5,8 +5,11 @@ In General
 ----------
 
 - `PEP 8`_, when sensible.
+- Conventions *and* configuration.
+- TextBlob wraps functionality in NLTK and pattern.en. Anything outside of that should be written as an extension.
 - Test ruthlessly. Write docs for new features.
 - Even more important than Test-Driven Development--*Human-Driven Development*.
+- These guidelines may--and probably will--change.
 
 .. _`PEP 8`: http://www.python.org/dev/peps/pep-0008/
 
@@ -17,47 +20,54 @@ In Particular
 Questions, Feature Requests, Bug Reports, and Feedback. . .
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-. . .should all be reported on the `Github Issue Tracker`_ .
+. . .should all be reported on the `Github Issue Tracker`_ . For a nicer interface, check out the `TextBlob waffle.io board`_.
 
+.. _TextBlob waffle.io board: https://waffle.io/sloria/TextBlob
 .. _`Github Issue Tracker`: https://github.com/sloria/TextBlob/issues?state=open
 
 Setting Up for Local Development
 ++++++++++++++++++++++++++++++++
 
-1. Fork TextBlob_ on Github.
-2. Clone your fork::
+1. Fork TextBlob_ on Github. ::
 
-    $ git clone git@github.com/yourusername/textblob.git
+    $ git clone https://github.com/sloria/TextBlob.git
+    $ cd TextBlob
 
-3. It is recommended that you use virtualenv to keep your environment clean. If you have virtualenv and virtualenvwrapper_, run ::
-
-    $ mkvirtualenv textblob
-    $ cd textblob
-    $ workon textblob
-
-- If you don't have virtualenv and virtualenvwrapper, you can install both using `virtualenv-burrito`_.
-
-4. Install the development requirements. ::
+3. Install development requirements. ::
 
     $ pip install -r dev-requirements.txt
 
-Creating your own models
-++++++++++++++++++++++++
+.. _extension-development:
 
-You can add your own implementation for POS taggers, sentiment analyzers, chunkers, parsers, etc. simply by adding a class to the appropriate module in the ``text/`` package.
+Developing Extensions
++++++++++++++++++++++
 
-For example, if you want to create your own tagger, you would add a class to ``text/taggers.py``. The only requirement is that the class have a ``tag()`` method.
+Extensions are packages with the name ``textblob-something``, where "something" is the name of your extension. Extensions should be imported with ``import textblob_something``.
+
+Model Extensions
+++++++++++++++++
+
+To create a new extension for a part-of-speech tagger, sentiment analyzer, noun phrase extractor, classifier, tokenizer, or parser, simply create a module that has a class that implements the correct interface from ``textblob.base``. For example, a tagger might look like this:
 
 .. code-block:: python
+
+    from textblob.base import BaseTagger
 
     class MyTagger(BaseTagger):
         def tag(self, text):
             # Your implementation goes here
 
+Language Extensions
++++++++++++++++++++
 
-Check out the `API reference`_ for more info on the model interfaces.
+The process for developing language extensions is the same as developing model extensions. Create your part-of-speech taggers, tokenizers, parsers, etc. in the language of your choice. Packages should be named ``textblob-xx`` where "xx" is the two- or three-letter language code (`Language code reference`_).
 
-.. _`API reference`: https://textblob.readthedocs.org/en/latest/api_reference.html
+.. _Language code reference: http://www.loc.gov/standards/iso639-2/php/code_list.php
+
+To see examples of existing extensions, visit the :ref:`Extensions <extensions>` page.
+
+Check out the :ref:`API reference <api_base_classes>` for more info on the model interfaces.
+
 
 Git Branch Structure
 ++++++++++++++++++++
@@ -73,7 +83,8 @@ TextBlob loosely follows Vincent Driessen's `Successful Git Branching Model <htt
 Pull Requests
 ++++++++++++++
 
-1. Create a new local branch. ::
+1. Create a new local branch.
+::
 
     $ git checkout -b name-of-feature
 
@@ -85,8 +96,10 @@ Pull Requests
 
 3. Before submitting a pull request, check the following:
 
-- If the pull request adds functionality, it should be tested and the docs should be updated.
-- The pull request should work on Python 2.6, 2.7, 3.3, and PyPy. Use ``tox`` to verify that it does.
+- If the pull request adds functionality, it is tested and the docs are updated.
+- If you've developed an extension, it is on the :ref:`Extensions List <extensions>`.
+- The pull request works on Python 2.6, 2.7, 3.3, and PyPy. Use ``tox`` to verify that it does.
+- You've added yourself to ``AUTHORS.rst``.
 
 4. Submit a pull request to the ``sloria:dev`` branch.
 
@@ -99,17 +112,17 @@ To run all the tests: ::
 
 To skip slow tests: ::
 
-    $ python run_tests fast
+    $ python run_tests.py fast
 
 To skip tests that require internet: ::
 
-    $ python run_tests no-internet
+    $ python run_tests.py no-internet
 
-To get test coverage reports: ::
+To get test coverage reports (must have coverage installed): ::
 
-    $ python run_tests cover
+    $ python run_tests.py cover
 
-To run tests on Python 2.6, 2.7, and 3.3 virtual environents: ::
+To run tests on Python 2.6, 2.7, and 3.3 virtual environments (must have each interpreter installed): ::
 
     $ tox
 
@@ -120,16 +133,12 @@ Contributions to the documentation are welcome. Documentation is written in `reS
 
 To build docs: ::
 
-    $ invoke build_docs -b
+    $ invoke docs -b
 
 The ``-b`` (for "browse") automatically opens up the docs in your browser after building.
 
 .. _Sphinx: http://sphinx.pocoo.org/
 
 .. _`reStructured Text`: http://docutils.sourceforge.net/rst.html
-
-.. _`virtualenv-burrito`: https://github.com/brainsik/virtualenv-burrito
-
-.. _virtualenvwrapper: http://virtualenvwrapper.readthedocs.org/en/latest/
 
 .. _TextBlob: https://github.com/sloria/TextBlob

@@ -3,14 +3,16 @@ python:
     - "2.6"
     - "2.7"
     - "3.3"
-    - "pypy"
+before_install:
+    - "wget https://s3.amazonaws.com/textblob/nltk_data.tar.gz"
+    - "tar -xzvf nltk_data.tar.gz -C ~"
 # Install dependencies
 install:
-    - "pip install -U . --use-mirrors"
-    - "python download_corpora.py"
+    - "pip install numpy"
+    - "pip install -U ."
+    - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then pip install sphinx; fi
 # Run tests
-script: "python run_tests.py"
-branches:
-    only:
-        - master
-        - dev
+script:
+    - "python run_tests.py"
+    # Run doctests against py27
+    - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then cd docs && make doctest; fi
