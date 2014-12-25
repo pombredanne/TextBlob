@@ -11,12 +11,8 @@ TextBlob: Simplified Text Processing
     :alt: Travis-CI
 
 .. image:: https://pypip.in/d/textblob/badge.png
-    :target: https://crate.io/packages/textblob/
+    :target: https://warehouse.python.org/project/textblob/
     :alt: Number of PyPI downloads
-
-.. image:: https://badge.waffle.io/sloria/TextBlob.png?label=Ready
-     :target: https://waffle.io/sloria/TextBlob
-     :alt: Issues in Ready
 
 
 Homepage: `https://textblob.readthedocs.org/ <https://textblob.readthedocs.org/>`_
@@ -40,8 +36,8 @@ Homepage: `https://textblob.readthedocs.org/ <https://textblob.readthedocs.org/>
     '''
 
     blob = TextBlob(text)
-    blob.tags           # [(u'The', u'DT'), (u'titular', u'JJ'),
-                        #  (u'threat', u'NN'), (u'of', u'IN'), ...]
+    blob.tags           # [('The', 'DT'), ('titular', 'JJ'),
+                        #  ('threat', 'NN'), ('of', 'IN'), ...]
 
     blob.noun_phrases   # WordList(['titular threat', 'blob',
                         #            'ultimate movie monster',
@@ -70,7 +66,6 @@ Features
 - `n`-grams
 - Word inflection (pluralization and singularization) and lemmatization
 - Spelling correction
-- JSON serialization
 - Add new models or languages through extensions
 - WordNet integration
 

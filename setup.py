@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import re
-
 from setuptools import setup, find_packages
 
-REQUIREMENTS = ['PyYAML']
+REQUIREMENTS = ['nltk>=3.0']
 TEST_REQUIREMENTS = ['nose', 'mock']
 
 
@@ -44,8 +43,9 @@ setup(
     author_email='sloria1@gmail.com',
     url='https://github.com/sloria/TextBlob',
     install_requires=REQUIREMENTS,
-    packages=find_packages(exclude=('test*', 'textblob.nltk.test')),
+    packages=find_packages(exclude=('test*', )),
     include_package_data=True,
+    zip_safe=False,
     package_data={
         "textblob.en": ["*.txt", "*.xml"]
     },
@@ -58,6 +58,7 @@ setup(
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy',
         "Topic :: Text Processing :: Linguistic",

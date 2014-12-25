@@ -10,7 +10,7 @@ Installing/Upgrading From the PyPI
     $ pip install -U textblob
     $ python -m textblob.download_corpora
 
-This will install TextBlob and download the necessary NLTK corpora.
+This will install TextBlob and download the necessary NLTK corpora. If you need to change the default download directory set the ``NLTK_DATA`` environment variable.
 
 .. admonition:: Downloading the minimum corpora
 
@@ -18,6 +18,15 @@ This will install TextBlob and download the necessary NLTK corpora.
     ::
 
         $ python -m textblob.download_corpora lite
+
+With conda
+----------
+
+TextBlob is also available as a `conda <http://conda.pydata.org/>`_ package. To install with ``conda``, run ::
+
+    $ conda config --add channels https://conda.binstar.org/sloria
+    $ conda install textblob
+    $ python -m textblob.download_corpora
 
 From Source
 -----------
@@ -71,11 +80,6 @@ Old:
     from text.taggers import NLTKTagger
 
 
-.. note::
-
-    You can still import from ``text``, but this will raise a ``DeprecationWarning``. The ``text`` package will be removed in later versions.
-
-
 Python
 ++++++
 
@@ -85,16 +89,10 @@ TextBlob supports Python >=2.6 or >=3.3.
 Dependencies
 ++++++++++++
 
-PyYAML is TextBlob's only external dependency. It will be installed automatically when you run ``pip install textblob`` or ``python setup.py install``. A vendorized version of NLTK_ is bundled internally.
-
-.. note::
-
-    If you already have NLTK installed, TextBlob will use your local version instead of the bundled version.
+TextBlob depends on NLTK 3. NLTK will be installed automatically when you run ``pip install textblob`` or ``python setup.py install``.
 
 Some features, such as the maximum entropy classifier, require `numpy`_, but it is not required for basic usage.
 
 .. _numpy: http://www.numpy.org/
 
 .. _NLTK: http://nltk.org/
-
-
