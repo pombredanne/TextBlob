@@ -1,15 +1,13 @@
 [run]
 include =
-    text*
+    textblob*
 omit =
     # Vendorized dependencies
-    *nltk*
-    *yaml*
     *unicodecsv*
     # Pattern.en code
-    text/en.py
-    text/text.py
-    text/inflect.py
+    text/en/__init__.py
+    text/_text.py
+    text/en/inflect.py
 
 [report]
 exclude_lines =

@@ -8,23 +8,25 @@ Installing/Upgrading From the PyPI
 ::
 
     $ pip install -U textblob
-    $ curl https://raw.github.com/sloria/TextBlob/master/download_corpora.py | python
+    $ python -m textblob.download_corpora
 
 This will install TextBlob and download the necessary NLTK corpora.
 
 .. admonition:: Downloading the minimum corpora
 
-    If you only intend to use TextBlob's default models (no model overrides), then you can use the ``download_corpora_lite.py`` script instead. This downloads only those corpora needed for basic functionality.
+    If you only intend to use TextBlob's default models (no model overrides), you can pass the ``lite`` argument. This downloads only those corpora needed for basic functionality.
     ::
 
-        $ curl https://raw.github.com/sloria/TextBlob/master/download_corpora_lite.py | python
+        $ python -m textblob.download_corpora lite
 
-.. admonition:: If you don't have pip:
+With conda
+----------
 
-    If you don't have ``pip`` (you should), run this first: ::
+TextBlob is also available as a `conda <http://conda.pydata.org/>`_ package. To install with ``conda``, run ::
 
-        $ curl https://raw.github.com/pypa/pip/master/contrib/get-pip.py | python
-
+    $ conda config --add channels https://conda.binstar.org/sloria
+    $ conda install textblob
+    $ python -m textblob.download_corpora
 
 From Source
 -----------
@@ -57,22 +59,26 @@ To get the latest development version of TextBlob, run
 
     $ pip install -U git+https://github.com/sloria/TextBlob.git@dev
 
-Getting Extra Models and Data
------------------------------
 
-.. module:: text.taggers
+Migrating from older versions (<=0.7.1)
+---------------------------------------
 
-Some features, such as the :class:`PerceptronTagger <PerceptronTagger>`, require data that is not available from the NLTK downloader. These data will be made available on the Github `release page`_ for TextBlob.
+As of TextBlob 0.8.0, TextBlob's core package was renamed to ``textblob``, whereas earlier versions used a package called ``text``. Therefore, migrating to newer versions should be as simple as rewriting your imports, like so:
 
-To install a model or corpus:
+New:
+::
 
-1. Download the file from the `release page`_.
-2. Unzip/untar the downloaded file.
-3. Place the uncompressed file in your TextBlob installation directory. To find out where this is, you can run ::
+    from textblob import TextBlob, Word, Blobber
+    from textblob.classifiers import NaiveBayesClassifier
+    from textblob.taggers import NLTKTagger
 
-    $ python -c "import text; print(text.__path__[0])"
+Old:
+::
 
-.. _release page: https://github.com/sloria/TextBlob/releases
+    from text.blob import TextBlob, Word, Blobber
+    from text.classifiers import NaiveBayesClassifier
+    from text.taggers import NLTKTagger
+
 
 Python
 ++++++
@@ -83,8 +89,10 @@ TextBlob supports Python >=2.6 or >=3.3.
 Dependencies
 ++++++++++++
 
-PyYAML is TextBlob's only external dependency. It will be installed automatically when you run ``pip install textblob`` or ``python setup.py install``. A vendorized version of NLTK_ is bundled internally.
+TextBlob depends on NLTK 3. NLTK will be installed automatically when you run ``pip install textblob`` or ``python setup.py install``.
+
+Some features, such as the maximum entropy classifier, require `numpy`_, but it is not required for basic usage.
+
+.. _numpy: http://www.numpy.org/
 
 .. _NLTK: http://nltk.org/
-
-

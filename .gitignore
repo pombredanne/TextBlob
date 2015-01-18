@@ -49,4 +49,11 @@ pylintrc
 
 ### Extra models and data ###
 
-text/trontagger.pickle
+text/*.pickle
+text/en/*.pickle
+
+# Readme build
+README.html
+
+.ipynb_checkpoints/
+*.ipynb

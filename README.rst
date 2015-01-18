@@ -11,12 +11,8 @@ TextBlob: Simplified Text Processing
     :alt: Travis-CI
 
 .. image:: https://pypip.in/d/textblob/badge.png
-    :target: https://crate.io/packages/textblob/
+    :target: https://warehouse.python.org/project/textblob/
     :alt: Number of PyPI downloads
-
-.. image:: http://api.flattr.com/button/flattr-badge-large.png
-    :target: http://flattr.com/thing/1786153/sloriaTextBlob-on-GitHub
-    :alt: Flattr Steve
 
 
 Homepage: `https://textblob.readthedocs.org/ <https://textblob.readthedocs.org/>`_
@@ -26,7 +22,7 @@ Homepage: `https://textblob.readthedocs.org/ <https://textblob.readthedocs.org/>
 
 .. code-block:: python
 
-    from text.blob import TextBlob
+    from textblob import TextBlob
 
     text = '''
     The titular threat of The Blob has always struck me as the ultimate movie
@@ -40,17 +36,17 @@ Homepage: `https://textblob.readthedocs.org/ <https://textblob.readthedocs.org/>
     '''
 
     blob = TextBlob(text)
-    blob.tags           # [(u'The', u'DT'), (u'titular', u'JJ'),
-                        #  (u'threat', u'NN'), (u'of', u'IN'), ...]
+    blob.tags           # [('The', 'DT'), ('titular', 'JJ'),
+                        #  ('threat', 'NN'), ('of', 'IN'), ...]
 
     blob.noun_phrases   # WordList(['titular threat', 'blob',
                         #            'ultimate movie monster',
                         #            'amoeba-like mass', ...])
 
     for sentence in blob.sentences:
-        print(sentence.sentiment)  # returns (polarity, subjectivity)
-    # (0.060, 0.605)
-    # (-0.341, 0.767)
+        print(sentence.sentiment.polarity)
+    # 0.060
+    # -0.341
 
     blob.translate(to="es")  # 'La amenaza titular de The Blob...'
 
@@ -70,15 +66,15 @@ Features
 - `n`-grams
 - Word inflection (pluralization and singularization) and lemmatization
 - Spelling correction
-- JSON serialization
-- Easily swap models, or create your own
+- Add new models or languages through extensions
+- WordNet integration
 
 Get it now
 ----------
 ::
 
     $ pip install -U textblob
-    $ curl https://raw.github.com/sloria/TextBlob/master/download_corpora.py | python
+    $ python -m textblob.download_corpora
 
 Examples
 --------

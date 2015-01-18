@@ -3,8 +3,11 @@ import unittest
 from nose.tools import *  # PEP8 asserts
 from nose.plugins.attrib import attr
 
-from text.packages import nltk
-from text.np_extractors import ConllExtractor, filter_insignificant
+import nltk
+
+from textblob.base import BaseNPExtractor
+from textblob.np_extractors import ConllExtractor
+from textblob.utils import filter_insignificant
 
 
 class TestConllExtractor(unittest.TestCase):
@@ -40,6 +43,16 @@ constructs intended to enable clear programs on both a small and large scale.
         filtered = filter_insignificant(chunk.leaves())
         tags = [tag for word, tag in filtered]
         assert_true("DT" not in tags)
+
+
+class BadExtractor(BaseNPExtractor):
+    '''An extractor without an extract method. How useless.'''
+    pass
+
+
+def test_cannot_instantiate_incomplete_extractor():
+    assert_raises(TypeError,
+        lambda: BadExtractor())
 
 if __name__ == '__main__':
     unittest.main()

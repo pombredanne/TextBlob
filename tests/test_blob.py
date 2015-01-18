@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Tests for the text processor.
 """
@@ -7,21 +6,28 @@ from __future__ import unicode_literals
 import json
 from unittest import TestCase, main
 from datetime import datetime
-from nose.tools import *  # PEP8 asserts
+import mock
+
+from nose.tools import *  # noqa (PEP8 asserts)
 from nose.plugins.attrib import attr
-from text.compat import PY2, unicode
-import text.blob as tb
-from text.packages import nltk
-from text.np_extractors import ConllExtractor, FastNPExtractor
-from text.taggers import NLTKTagger, PatternTagger
-from text.tokenizers import WordTokenizer, SentenceTokenizer
-from text.sentiments import NaiveBayesAnalyzer, PatternAnalyzer
-from text.parsers import PatternParser
-from text.classifiers import NaiveBayesClassifier
+import nltk
+
+from textblob.compat import PY2, unicode, basestring, binary_type
+import textblob as tb
+from textblob.np_extractors import ConllExtractor, FastNPExtractor
+from textblob.taggers import NLTKTagger, PatternTagger
+from textblob.tokenizers import WordTokenizer, SentenceTokenizer
+from textblob.sentiments import NaiveBayesAnalyzer, PatternAnalyzer
+from textblob.parsers import PatternParser
+from textblob.classifiers import NaiveBayesClassifier
+import textblob.wordnet as wn
+
+Synset = nltk.corpus.reader.Synset
 
 train = [
     ('I love this sandwich.', 'pos'),
     ('This is an amazing place!', 'pos'),
+    ("What a truly amazing dinner.", 'pos'),
     ('I feel very good about these beers.', 'pos'),
     ('This is my best work.', 'pos'),
     ("What an awesome view", 'pos'),
@@ -69,6 +75,17 @@ class WordListTest(TestCase):
             assert_equal(repr(wl), "WordList([u'Beautiful', u'is', u'better'])")
         else:
             assert_equal(repr(wl), "WordList(['Beautiful', 'is', 'better'])")
+
+    def test_slice_repr(self):
+        wl = tb.WordList(['Beautiful', 'is', 'better'])
+        if PY2:
+            assert_equal(repr(wl[:2]), "WordList([u'Beautiful', u'is'])")
+        else:
+            assert_equal(repr(wl[:2]), "WordList(['Beautiful', 'is'])")
+
+    def test_str(self):
+        wl = tb.WordList(self.words)
+        assert_equal(str(wl), str(self.words))
 
     def test_singularize(self):
         wl = tb.WordList(['dogs', 'cats', 'buffaloes', 'men', 'mice'])
@@ -124,8 +141,13 @@ class SentenceTest(TestCase):
         self.sentence = tb.Sentence(self.raw_sentence)
 
     def test_repr(self):
-        assert_equal(repr(self.sentence),
-                     "Sentence({0})".format(repr(self.raw_sentence)))
+        # In Py2, repr returns bytestring
+        if PY2:
+            assert_equal(repr(self.sentence),
+                        b"Sentence(\"{0}\")".format(binary_type(self.raw_sentence)))
+        # In Py3, returns text type string
+        else:
+            assert_equal(repr(self.sentence), 'Sentence("{0}")'.format(self.raw_sentence))
 
     def test_stripped_sentence(self):
         assert_equal(self.sentence.stripped,
@@ -181,8 +203,9 @@ class SentenceTest(TestCase):
     def test_string_equality(self):
         assert_equal(self.sentence, 'Any place with frites and Belgian beer has my vote.')
 
-    @attr("requires_internet")
-    def test_translate(self):
+    @mock.patch('textblob.translate.Translator.translate')
+    def test_translate(self, mock_translate):
+        mock_translate.return_value = 'Esta es una frase.'
         blob = tb.Sentence("This is a sentence.")
         translated = blob.translate(to="es")
         assert_true(isinstance(translated, tb.Sentence))
@@ -192,11 +215,21 @@ class SentenceTest(TestCase):
         blob = tb.Sentence("I havv bad speling.")
         assert_true(isinstance(blob.correct(), tb.Sentence))
         assert_equal(blob.correct(), tb.Sentence("I have bad spelling."))
+        blob = tb.Sentence("I havv \ngood speling.")
+        assert_true(isinstance(blob.correct(), tb.Sentence))
+        assert_equal(blob.correct(), tb.Sentence("I have \ngood spelling."))
 
-    @attr('requires_internet')
-    def test_translate_detects_language_by_default(self):
-        blob = tb.TextBlob(unicode("ذات سيادة كاملة"))
-        assert_equal(blob.translate(), "With full sovereignty")
+    @mock.patch('textblob.translate.Translator._get_translation_from_json5')
+    @mock.patch('textblob.translate.Translator._get_language_from_json5')
+    @mock.patch('textblob.translate.Translator._get_json5')
+    @mock.patch('textblob.translate.Translator.detect')
+    def test_translate_detects_language_by_default(self, mock_detect,
+            mock_get_json5, mock_get_language, mock_get_translation):
+        mock_get_language.return_value = 'ar'
+        mock_get_translation.return_value = 'Fully sovereign'
+        text = unicode("ذات سيادة كاملة")
+        blob = tb.TextBlob(text)
+        assert_true(mock_detect.called_once_with(text))
 
 
 class TextBlobTest(TestCase):
@@ -245,7 +278,7 @@ is managed by the non-profit Python Software Foundation.'''
         self.short_blob = tb.TextBlob(self.short)
 
     def test_init(self):
-        blob = tb.TextBlob('Wow I love this place. It really rocks my socks!!!')
+        blob = tb.TextBlob('Wow I love this place. It really rocks my socks!')
         assert_equal(len(blob.sentences), 2)
         assert_equal(blob.sentences[1].stripped, 'it really rocks my socks')
         assert_equal(blob.string, blob.raw)
@@ -285,16 +318,19 @@ is managed by the non-profit Python Software Foundation.'''
             tb.WordList(('am', 'eating', 'a', 'pizza'))
         ])
 
-    @attr("py27_only")
     def test_clean_html(self):
         html = '<b>Python</b> is a widely used <a href="/wiki/General-purpose_programming_language" title="General-purpose programming language">general-purpose</a>, <a href="/wiki/High-level_programming_language" title="High-level programming language">high-level programming language</a>.'
-        with assert_raises(NotImplementedError):
-            tb.TextBlob(html, clean_html=True)
+        assert_raises(NotImplementedError, lambda: tb.TextBlob(html, clean_html=True))
 
     def test_sentences(self):
         blob = self.blob
         assert_equal(len(blob.sentences), 19)
         assert_true(isinstance(blob.sentences[0], tb.Sentence))
+
+    def test_senences_with_space_before_punctuation(self):
+        text = "Uh oh. This sentence might cause some problems. : Now we're ok."
+        b = tb.TextBlob(text)
+        assert_equal(len(b.sentences), 3)
 
     def test_sentiment_of_foreign_text(self):
         blob = tb.TextBlob(u'Nous avons cherch\xe9 un motel dans la r\xe9gion de '
@@ -327,7 +363,10 @@ is managed by the non-profit Python Software Foundation.'''
 
     def test_repr(self):
         blob1 = tb.TextBlob('lorem ipsum')
-        assert_equal(repr(blob1), "TextBlob({0})".format(repr('lorem ipsum')))
+        if PY2:
+            assert_equal(repr(blob1), b"TextBlob(\"{0}\")".format(binary_type('lorem ipsum')))
+        else:
+            assert_equal(repr(blob1), "TextBlob(\"{0}\")".format('lorem ipsum'))
 
     def test_cmp(self):
         blob1 = tb.TextBlob('lorem ipsum')
@@ -336,9 +375,9 @@ is managed by the non-profit Python Software Foundation.'''
 
         assert_true(blob1 == blob2)  # test ==
         assert_true(blob1 > blob3)  # test >
-        assert_true(blob1 >= blob3) # test >=
+        assert_true(blob1 >= blob3)  # test >=
         assert_true(blob3 < blob2)  # test <
-        assert_true(blob3 <= blob2) # test <=
+        assert_true(blob3 <= blob2)  # test <=
 
     def test_invalid_comparison(self):
         blob = tb.TextBlob("one")
@@ -382,14 +421,14 @@ is managed by the non-profit Python Software Foundation.'''
         blob = tb.TextBlob('Simple is better than complex. '
                             'Complex is better than complicated.')
         assert_equal(blob.pos_tags, [
-            ('Simple', 'NN'),
+            ('Simple', 'JJ'),
             ('is', 'VBZ'),
             ('better', 'JJR'),
             ('than', 'IN'),
-            ('complex', 'NN'),
+            ('complex', 'JJ'),
             ('Complex', 'NNP'),
             ('is', 'VBZ'),
-            ('better', 'RBR'),
+            ('better', 'JJR'),
             ('than', 'IN'),
             ('complicated', 'VBN'),
             ])
@@ -554,16 +593,6 @@ is managed by the non-profit Python Software Foundation.'''
         assert_equal(tb.TextBlob(' ').join(l), tb.TextBlob('explicit is better'))
         assert_equal(tb.TextBlob(' ').join(wl), tb.TextBlob('explicit is better'))
 
-    def test_multiple_punctuation_at_end_of_sentence(self):
-        '''Test sentences that have multiple punctuation marks
-        at the end of the sentence.'''
-        blob = tb.TextBlob('Get ready! This has an ellipses...')
-        assert_equal(len(blob.sentences), 2)
-        assert_equal(blob.sentences[1].raw, 'This has an ellipses...')
-        blob2 = tb.TextBlob('OMG! I am soooo LOL!!!')
-        assert_equal(len(blob2.sentences), 2)
-        assert_equal(blob2.sentences[1].raw, 'I am soooo LOL!!!')
-
     @attr('slow')
     def test_blob_noun_phrases(self):
         noun_phrases = self.np_test_blob.noun_phrases
@@ -667,16 +696,12 @@ is managed by the non-profit Python Software Foundation.'''
         b2 = tb.TextBlob("Faces have values")
         assert_true(b1.sentiment[0] > b2.sentiment[0])
 
-    @attr('py27_only')
     def test_bad_init(self):
-        with assert_raises(TypeError):
-            tb.TextBlob(['bad'])
-        with assert_raises(ValueError):
-            tb.TextBlob("this is fine",
-                        np_extractor="this is not fine")
-        with assert_raises(ValueError):
-            tb.TextBlob("this is fine",
-                        pos_tagger="this is not fine")
+        assert_raises(TypeError, lambda: tb.TextBlob(['bad']))
+        assert_raises(ValueError, lambda: tb.TextBlob("this is fine",
+                                            np_extractor="this is not fine"))
+        assert_raises(ValueError, lambda: tb.TextBlob("this is fine",
+                                            pos_tagger="this is not fine"))
 
     def test_in(self):
         blob = tb.TextBlob('Beautiful is better than ugly. ')
@@ -728,37 +753,24 @@ is managed by the non-profit Python Software Foundation.'''
         # Pass in the TabTokenizer
         assert_equal(blob.tokenize(tokenizer), tb.WordList(["This is", "text."]))
 
-    @attr("requires_internet")
-    def test_translate(self):
+    @mock.patch('textblob.translate.Translator.translate')
+    def test_translate(self, mock_translate):
+        mock_translate.return_value = 'Esta es una frase.'
         blob = tb.TextBlob("This is a sentence.")
         translated = blob.translate(to="es")
         assert_true(isinstance(translated, tb.TextBlob))
         assert_equal(translated, "Esta es una frase.")
+        mock_translate.return_value = 'This is a sentence.'
         es_blob = tb.TextBlob("Esta es una frase.")
         to_en = es_blob.translate(from_lang="es", to="en")
-        assert_equal(to_en, "This is a phrase .")
+        assert_equal(to_en, "This is a sentence.")
 
-    @attr("requires_internet")
-    def test_translate_non_ascii(self):
-        blob = tb.TextBlob(unicode("ذات سيادة كاملة"))
-        translated = blob.translate(from_lang="ar", to="en")
-        assert_equal(translated, "With full sovereignty")
-
-        chinese_blob = tb.TextBlob(unicode("美丽优于丑陋"))
-        translated = chinese_blob.translate(from_lang="zh-CN", to='en')
-        assert_equal(translated, "Beautiful is better than ugly")
-
-    @attr("requires_internet")
-    def test_detect(self):
+    @mock.patch('textblob.translate.Translator.detect')
+    def test_detect(self, mock_detect):
+        mock_detect.return_value = 'es'
         es_blob = tb.TextBlob("Hola")
         assert_equal(es_blob.detect_language(), "es")
-        en_blob = tb.TextBlob("Hello")
-        assert_equal(en_blob.detect_language(), "en")
-
-    @attr("requires_internet")
-    def test_detect_non_ascii(self):
-        blob = tb.TextBlob(unicode("ذات سيادة كاملة"))
-        assert_equal(blob.detect_language(), "ar")
+        assert_true(mock_detect.called_once_with('Hola'))
 
     def test_correct(self):
         blob = tb.TextBlob("I havv bad speling.")
@@ -770,25 +782,36 @@ is managed by the non-profit Python Software Foundation.'''
         assert_equal(blob3.correct(), "The meaning of life is 42.0.")
         blob4 = tb.TextBlob("?")
         assert_equal(blob4.correct(), "?")
+        # From a user-submitted bug
+        text = "Before you embark on any of this journey, write a quick " + \
+                "high-level test that demonstrates the slowness. " + \
+                "You may need to introduce some minimum set of data to " + \
+                "reproduce a significant enough slowness."
+        blob5 = tb.TextBlob(text)
+        assert_equal(blob5.correct(), text)
+        text = "Word list!  :\n" + \
+                "\t* spelling\n" + \
+                "\t* well"
+        blob6 = tb.TextBlob(text)
+        assert_equal(blob6.correct(), text)
 
     def test_parse(self):
         blob = tb.TextBlob("And now for something completely different.")
         assert_equal(blob.parse(), PatternParser().parse(blob.string))
 
-    @attr("py27_only")
     def test_passing_bad_init_params(self):
         tagger = PatternTagger()
-        with assert_raises(ValueError):
-            tb.TextBlob("blah", parser=tagger)
-        with assert_raises(ValueError):
-            tb.TextBlob("blah", np_extractor=tagger)
-        with assert_raises(ValueError):
-            tb.TextBlob("blah", tokenizer=tagger)
-        with assert_raises(ValueError):
-            tb.TextBlob("blah", analyzer=tagger)
+        assert_raises(ValueError,
+            lambda: tb.TextBlob("blah", parser=tagger))
+        assert_raises(ValueError,
+            lambda: tb.TextBlob("blah", np_extractor=tagger))
+        assert_raises(ValueError,
+            lambda: tb.TextBlob("blah", tokenizer=tagger))
+        assert_raises(ValueError,
+            lambda: tb.TextBlob("blah", analyzer=tagger))
         analyzer = PatternAnalyzer
-        with assert_raises(ValueError):
-            tb.TextBlob("blah", pos_tagger=analyzer)
+        assert_raises(ValueError,
+            lambda: tb.TextBlob("blah", pos_tagger=analyzer))
 
     def test_classify(self):
         blob = tb.TextBlob("This is an amazing library. What an awesome classifier!",
@@ -797,11 +820,11 @@ is managed by the non-profit Python Software Foundation.'''
         for s in blob.sentences:
             assert_equal(s.classify(), 'pos')
 
-    @attr("py27_only")
     def test_classify_without_classifier(self):
         blob = tb.TextBlob("This isn't gonna be good")
-        with assert_raises(NameError):
-            blob.classify()
+        assert_raises(NameError,
+            lambda: blob.classify())
+
 
 class WordTest(TestCase):
 
@@ -837,16 +860,19 @@ class WordTest(TestCase):
         assert_equal(self.cat.lower(), "cat")
         assert_equal(self.cat[0:2], 'ca')
 
-    @attr('requires_internet')
-    def test_translate(self):
+    @mock.patch('textblob.translate.Translator.translate')
+    def test_translate(self, mock_translate):
+        mock_translate.return_value = 'gato'
         assert_equal(tb.Word("cat").translate(to="es"), "gato")
 
-    @attr('requires_internet')
-    def test_translate_without_from_lang(self):
-        assert_equal(tb.Word('hola').translate(), tb.Word('hello'))
+    @mock.patch('textblob.translate.Translator.translate')
+    def test_translate_without_from_lang(self, mock_translate):
+        mock_translate.return_value = 'hi'
+        assert_equal(tb.Word('hola').translate(), 'hi')
 
-    @attr('requires_internet')
-    def test_detect_language(self):
+    @mock.patch('textblob.translate.Translator.detect')
+    def test_detect_language(self, mock_detect):
+        mock_detect.return_value = 'fr'
         assert_equal(tb.Word("bonjour").detect_language(), 'fr')
 
     def test_spellcheck(self):
@@ -872,11 +898,58 @@ class WordTest(TestCase):
         assert_true(isinstance(correct, tb.Word))
 
     @attr('slow')
-    def test_lemma(self):
+    def test_lemmatize(self):
         w = tb.Word("cars")
-        assert_equal(w.lemma, "car")
+        assert_equal(w.lemmatize(), "car")
+        w = tb.Word("wolves")
+        assert_equal(w.lemmatize(), "wolf")
+        w = tb.Word("went")
+        assert_equal(w.lemmatize("v"), "go")
+
+    def test_lemma(self):
         w = tb.Word("wolves")
         assert_equal(w.lemma, "wolf")
+        w = tb.Word("went", "VBD");
+        assert_equal(w.lemma, "go")
+
+    def test_synsets(self):
+        w = tb.Word("car")
+        assert_true(isinstance(w.synsets, (list, tuple)))
+        assert_true(isinstance(w.synsets[0], Synset))
+
+    def test_synsets_with_pos_argument(self):
+        w = tb.Word("work")
+        noun_syns = w.get_synsets(pos=wn.NOUN)
+        for synset in noun_syns:
+            assert_equal(synset.pos(), wn.NOUN)
+
+    def test_definitions(self):
+        w = tb.Word("octopus")
+        for definition in w.definitions:
+            print(type(definition))
+            assert_true(isinstance(definition, basestring))
+
+    def test_define(self):
+        w = tb.Word("hack")
+        synsets = w.get_synsets(wn.NOUN)
+        definitions = w.define(wn.NOUN)
+        assert_equal(len(synsets), len(definitions))
+
+
+class TestWordnetInterface(TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_synset(self):
+        syn = wn.Synset("dog.n.01")
+        word = tb.Word("dog")
+        assert_equal(word.synsets[0], syn)
+
+    def test_lemma(self):
+        lemma = wn.Lemma('eat.v.01.eat')
+        word = tb.Word("eat")
+        assert_equal(word.synsets[0].lemmas()[0], lemma)
 
 
 class BlobberTest(TestCase):
@@ -930,7 +1003,6 @@ class BlobberTest(TestCase):
         b = tb.Blobber(classifier=classifier)
         blob = b("I am so amazing")
         assert_equal(blob.classify(), 'pos')
-
 
 def is_blob(obj):
     return isinstance(obj, tb.TextBlob)
